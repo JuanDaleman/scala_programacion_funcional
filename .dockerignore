@@ -1,0 +1,13 @@
+*
+!Dockerfile
+!README.md
+!notebooks/
+!notebooks/**
+!docs/
+!docs/**
+!scripts/
+!scripts/**
+!ejemplos/
+!ejemplos/**
+**/.ipynb_checkpoints/
+**/__pycache__/
