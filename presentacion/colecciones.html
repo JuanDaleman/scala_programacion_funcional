@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Cotización en Scala con operaciones de colecciones, aplicación parcial, contraste imperativo y evaluación perezosa en Binder.">
+  <title>Cotizar una promoción · Scala</title>
+  <link rel="stylesheet" href="vendor/reveal-5.2.1/dist/reset.css">
+  <link rel="stylesheet" href="vendor/reveal-5.2.1/dist/reveal.css">
+  <link rel="stylesheet" href="vendor/reveal-5.2.1/dist/theme/white.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/colecciones.css">
+</head>
+<body>
+<noscript>Activa JavaScript para navegar por la presentación.</noscript>
+<main class="reveal" aria-label="Procesamiento funcional de colecciones en Scala">
+  <div class="slides">
+    <section id="problema" aria-labelledby="titulo-problema">
+      <h2 id="titulo-problema">Procesamiento de colecciones</h2>
+      <p class="eyebrow"> ¿Qué incluye la cotización? </p>
+      <p>La tienda ofrece un <strong>10 % de descuento</strong>. Cotiza una unidad de cada producto disponible.</p>
+      <table class="catalogo">
+        <caption>Catálogo de la tienda</caption>
+        <thead><tr><th scope="col">Producto</th><th scope="col">Precio original (COP)</th><th scope="col">Disponibilidad</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Teclado</th><td>100.000</td><td>Disponible</td></tr>
+          <tr><th scope="row">Audífonos</th><td>200.000</td><td>Disponible</td></tr>
+          <tr><th scope="row">Mouse</th><td>80.000</td><td>Agotado</td></tr>
+          <tr><th scope="row">Soporte</th><td>50.000</td><td>Disponible</td></tr>
+        </tbody>
+      </table>
+      <p class="callout">La cotización debe mostrar el <strong>nombre y el precio final</strong> de cada producto incluido, más el total.</p>
+    </section>
+
+    <section id="contraste" aria-labelledby="titulo-contraste">
+      <h2 id="titulo-contraste">Primera solución · Un bucle imperativo</h2>
+      <p>El mismo <code>for</code> decide qué incluir, calcula el precio y actualiza el detalle y el total.</p>
+      <pre class="pseudocode codigo-imperativo"><code>for (producto &lt;- catalogo) {
+  if (producto.disponible) {
+    val precioFinal = aplicarDescuento(producto.precio, descuento)
+    lineasImperativas += ((producto.nombre, precioFinal))
+    totalImperativo += precioFinal
+  }
+}</code></pre>
+      <p><strong>Predice</strong> qué líneas aparecerán y cuánto sumarán.</p>
+      <div class="notebook-action">
+        <a class="notebook-link" href="https://mybinder.org/v2/gh/JuanDaleman/scala_programacion_funcional/main?urlpath=lab/tree/notebooks/00_prueba_binder.ipynb" target="_blank" rel="noopener">Abrir notebook en Binder <span aria-hidden="true">↗</span></a>
+        <span class="caption">Bloque 4.1 · Ejecuta el bucle.</span>
+      </div>
+    </section>
+
+    <section id="operaciones" aria-labelledby="titulo-operaciones">
+      <h2 id="titulo-operaciones">Separemos el bucle en tres operaciones</h2>
+      <p>El bucle ya resolvió el problema. Ahora cada operación expresa una decisión y produce un resultado intermedio o final.</p>
+      <div class="thirds pasos">
+        <div>
+          <h3><code>filter</code> · Seleccionar</h3>
+          <p>Un predicado devuelve <code>Boolean</code>. Se conservan los productos disponibles.</p>
+          <p class="tipo">Lista de productos</p>
+        </div>
+        <div>
+          <h3><code>map</code> · Transformar</h3>
+          <p>Una función convierte cada producto en una tupla con su nombre y su precio final.</p>
+          <p class="tipo"><code>List[LineaCotizacion]</code></p>
+        </div>
+        <div>
+          <h3><code>foldLeft</code> · Acumular</h3>
+          <p>La suma empieza en cero. La función combina el total parcial con el precio de cada línea.</p>
+          <p class="tipo">Total en <code>BigDecimal</code></p>
+        </div>
+      </div>
+      <p class="callout"><code>producto =&gt; producto.disponible</code> es una <strong>lambda</strong>. Pasarla como argumento ilustra por qué <code>filter</code> es una operación de orden superior.</p>
+    </section>
+
+    <section id="aplicacion-parcial" aria-labelledby="titulo-aplicacion-parcial">
+      <h2 id="titulo-aplicacion-parcial">Un nombre para cada línea y una función por campaña</h2>
+      <div class="split">
+        <div>
+          <h3>Alias de tipo</h3>
+          <p><code>LineaCotizacion</code> nombra el par <code>(nombre, precioFinal)</code>. Las firmas muestran qué representa el dato y la tupla conserva sus dos componentes.</p>
+        </div>
+        <div>
+          <h3>Currificación y aplicación parcial</h3>
+          <p>El método recibe el descuento y los productos en dos listas de parámetros. Al fijar el 10 %, queda una función que espera los productos.</p>
+        </div>
+      </div>
+      <pre class="pseudocode"><code>type LineaCotizacion = (String, BigDecimal)
+val cotizarCampana10 = crearLineas(10)
+val lineas = cotizarCampana10(disponibles)</code></pre>
+      <p class="caption">La segunda llamada aplica la campaña a la lista seleccionada.</p>
+    </section>
+
+    <section id="binder" aria-labelledby="titulo-binder">
+      <h2 id="titulo-binder">Reconstruyamos la cotización en Binder</h2>
+      <p>Vuelve al notebook. Desde el <strong>bloque 4.2</strong>, ejecuta las tres operaciones y compara sus resultados con los del bucle.</p>
+      <ol class="demostracion">
+        <li><strong>Verifica la selección.</strong> ¿Qué producto queda fuera por disponibilidad?</li>
+        <li><strong>Inspecciona las líneas.</strong> ¿Qué datos conserva cada par?</li>
+        <li><strong>Comprueba el resultado.</strong> ¿Coinciden los nombres, los precios, el orden y el total?</li>
+      </ol>
+      <p class="callout">Ya podemos inspeccionar cada resultado por separado. Si la tienda añade un tope, ¿en qué etapa tenemos el precio final disponible?</p>
+    </section>
+
+    <section id="evaluacion" aria-labelledby="titulo-evaluacion">
+      <h2 id="titulo-evaluacion">¿Qué cambia al calcular el total con una vista?</h2>
+      <p>Las dos cadenas dan el mismo total. La diferencia está en cuándo se producen las líneas.</p>
+      <div class="split">
+        <div>
+          <h3><code>List</code> · Evaluación estricta</h3>
+          <p><code>filter</code> entrega la lista de disponibles. <code>map</code> entrega la lista de líneas. Después, <code>foldLeft</code> consume esas líneas.</p>
+          <p>El detalle queda listo para mostrarlo y reutilizarlo.</p>
+        </div>
+        <div>
+          <h3><code>view</code> · Evaluación perezosa</h3>
+          <p>Cuando <code>foldLeft</code> pide cada línea, la vista filtra y transforma según la demanda.</p>
+          <p>Para calcular solo el total, se recorre la entrada una vez y se evitan las listas intermedias.</p>
+        </div>
+      </div>
+      <p class="callout">Ambas variantes son secuenciales. Si volcamos la vista a una lista para mostrar el detalle, esa lista sí se materializa.</p>
+    </section>
+
+    <section id="reto" aria-labelledby="titulo-reto">
+      <h2 id="titulo-reto">Reto · Un tope por producto</h2>
+      <p class="eyebrow">2 minutos · En parejas</p>
+      <p>Conserva los productos disponibles cuyo <strong>precio por unidad después del descuento</strong> sea de hasta <strong>90.000 COP</strong>.</p>
+      <ol>
+        <li>Predice si entra el teclado. Cuesta 100.000 COP y queda en 90.000 COP con el descuento.</li>
+        <li>Completa <code>seleccionarConTope</code> y ejecuta la celda de comprobación en Binder.</li>
+        <li>Comprueba también los topes de 89.999 y 40.000 COP. Explica qué cambia.</li>
+      </ol>
+      <p class="callout"><strong>¿En qué etapa va el filtro por precio y por qué queda fuera el mouse?</strong></p>
+    </section>
+
+    <section id="promedio" aria-labelledby="titulo-promedio">
+      <h2 id="titulo-promedio">Ampliación · ¿Por qué el promedio es seguro?</h2>
+      <p>En el reto avanzado agrupamos los productos disponibles y calculamos el precio final promedio de cada categoría.</p>
+      <ol>
+        <li><code>groupBy</code> crea una clave a partir de un producto existente.</li>
+        <li><code>crearLineas</code> genera una línea por cada producto del grupo.</li>
+        <li>El número de líneas de cada grupo es positivo. Si la entrada está vacía, no hay grupos que promediar.</li>
+      </ol>
+      <p class="callout">El resultado tiene tipo <code>Map[String, List[Producto]]</code>. Que cada grupo tenga elementos se deduce de cómo se construye.</p>
+    </section>
+  </div>
+</main>
+<script src="vendor/reveal-5.2.1/dist/reveal.js"></script>
+<script src="js/presentation.js"></script>
+</body>
+</html>
