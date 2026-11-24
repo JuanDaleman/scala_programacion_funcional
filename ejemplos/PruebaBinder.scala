@@ -50,31 +50,51 @@
   assert(disponibles.map(producto => producto.id) == List(1, 2, 4))
   println(s"Disponibles: ${disponibles.map(producto => producto.nombre)}")
 
-  val preciosConDescuento = disponibles.map(
-    producto => aplicarDescuento(producto.precio, porcentajeDescuento)
-  )
-  val factorEsperado = (BigDecimal(100) - BigDecimal(porcentajeDescuento)) / BigDecimal(100)
-  val preciosEsperados = List("100000", "200000", "50000").map(
-    texto => BigDecimal(texto) * factorEsperado
-  )
-  assert(preciosConDescuento == preciosEsperados)
-  println(s"Precios con descuento: $preciosConDescuento")
+  def crearLineas(seleccion: List[Producto], descuento: Int): List[(String, BigDecimal)] =
+    seleccion.map { producto =>
+      val precioFinal = aplicarDescuento(producto.precio, descuento)
+      (producto.nombre, precioFinal)
+    }
 
-  val total = preciosConDescuento.foldLeft(BigDecimal(0))(
-    (acumulado, precio) => acumulado + precio
-  )
+  val lineas = crearLineas(disponibles, porcentajeDescuento)
+  lineas.foreach(linea => println(s"${linea._1}: ${linea._2} COP"))
+
+  def sumarLineas(detalle: List[(String, BigDecimal)]): BigDecimal =
+    detalle.foldLeft(BigDecimal(0)) { (acumulado, linea) =>
+      acumulado + linea._2
+    }
+
+  val total = sumarLineas(lineas)
+  val factorEsperado = (BigDecimal(100) - BigDecimal(porcentajeDescuento)) / BigDecimal(100)
   assert(total == BigDecimal("350000") * factorEsperado)
   assert(productos.head.precio == BigDecimal("100000"))
   println(s"Total con $porcentajeDescuento % de descuento: $total COP")
 
   val catalogoVacio = List.empty[Producto]
-  val totalVacio = catalogoVacio
-    .filter(producto => producto.disponible)
-    .map(producto => aplicarDescuento(producto.precio, porcentajeDescuento))
-    .foldLeft(BigDecimal(0))((acumulado, precio) => acumulado + precio)
-
+  val totalVacio = sumarLineas(crearLineas(catalogoVacio, porcentajeDescuento))
   assert(totalVacio == BigDecimal(0))
   println("CATALOGO VACIO: OK (total 0)")
+
+  def seleccionarConTope(detalle: List[(String, BigDecimal)], tope: BigDecimal)
+      : List[(String, BigDecimal)] =
+    detalle // TODO: devuelve solo las lineas cuyo precio final cumple el tope.
+
+  val lineasReto = crearLineas(disponibles, 10)
+  val casosTope = List(
+    (BigDecimal("90000"), List("Teclado", "Soporte"), BigDecimal("135000")),
+    (BigDecimal("89999"), List("Soporte"), BigDecimal("45000")),
+    (BigDecimal("40000"), List.empty[String], BigDecimal(0))
+  )
+
+  casosTope.foreach { caso =>
+    val (tope, nombresEsperados, totalEsperado) = caso
+    val seleccion = seleccionarConTope(lineasReto, tope)
+    val nombres = seleccion.map(linea => linea._1)
+    val importe = sumarLineas(seleccion)
+    val pasa = nombres == nombresEsperados && importe == totalEsperado
+    val estado = if pasa then "OK" else "Por revisar"
+    println(s"$estado | Tope: $tope COP | Productos: $nombres | Total: $importe COP")
+  }
 
   def buscarProducto(id: Int): Option[Producto] =
     productos.find(producto => producto.id == id)
